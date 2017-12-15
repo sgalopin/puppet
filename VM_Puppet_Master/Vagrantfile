@@ -86,7 +86,8 @@ Vagrant.configure("2") do |config|
     sudo apt-get update
     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
 	# puppet enterprise (For URL, see https://puppet.com/download-puppet-enterprise/thank-you)
-    wget -cqO /var/tmp/puppet-enterprise.tar.gz 'https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=ubuntu&rel=16.04&arch=amd64&ver=latest'
+    echo "--- Get puppet enterprise (it can take a while... ~250Mo)."
+	wget --no-verbose -cO /var/tmp/puppet-enterprise.tar.gz 'https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=ubuntu&rel=16.04&arch=amd64&ver=latest'
 	tar -xf /var/tmp/puppet-enterprise.tar.gz -C /var/tmp/ --transform "s/puppet-enterprise-[0-9\.]*-ubuntu-16.04-amd64/puppet-enterprise/"
 	sudo /var/tmp/puppet-enterprise/puppet-enterprise-installer -c /var/tmp/pe.conf
 	# modules (sudo is required to install the files into the good directory)
