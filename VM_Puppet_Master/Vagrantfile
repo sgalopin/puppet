@@ -98,4 +98,15 @@ Vagrant.configure("2") do |config|
 	#sudo puppet module install puppetlabs-tomcat
 
   SHELL
+  
+  # The following provisions are only run when called explicitly
+  if ARGV.include? '--provision-with'
+
+    # Provision "sign-node-requests"
+    config.vm.provision "sign-node-requests", type: "shell", privileged: false, inline: <<-SHELL
+      sudo puppet cert sign --all
+    SHELL
+
+  end
+
 end
