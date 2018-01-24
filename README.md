@@ -38,7 +38,11 @@ Vous pouvez maintenant accéder à la console à l'adresse: https://master.examp
 
 ### Configuration de puppet et installation de l'application
 
-Ouvrir la console de puppet:
+- Ouvrir la console de puppet:
+  - Ouvrir votre navigateur et saisir l'adresse: https://master.example.com ou http://192.168.50.12,
+  - Entrer le login 'admin' et le mot de passe 'admin'.
+
+
 - Préparer le déploiement des environnements:
   - Dans SETUP->Access control->users, ajouter un utilisateur 'Code Manager' (Full name) et 'code_manager' (Login),
   - Sélectionner l'utilisateur et cliquer sur 'Generate password reset',
