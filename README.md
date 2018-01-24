@@ -49,7 +49,8 @@ Vous pouvez maintenant accéder à la console à l'adresse: https://master.examp
   - Copier/Coller l'url dans votre navigateur,
   - Entrer un mot de passe pour l'utilisateur,
   - Dans SETUP->Acces control->User roles, cliquer sur le rôle 'Code Deployers',
-  - Ajouter l'utilisateur 'Code Manager' au rôle.
+  - Ajouter l'utilisateur 'Code Manager' au rôle,
+  - Commiter les modifications.
 
 
 - Déployer l'environnement de production (Défaut):
@@ -64,6 +65,7 @@ Vous pouvez maintenant accéder à la console à l'adresse: https://master.examp
   - Ouvrir le groupe,
   - Dans l'onglet 'Rules', ajouter le noeud 'agent1.example.com',
   - Dans l'onglet 'Configuration', ajouter la classe 'ogam_app',
+  - Commiter les modifications.
 
 
 - Lancer le catalogue de l'agent:
