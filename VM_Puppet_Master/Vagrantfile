@@ -40,7 +40,9 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
-  config.vm.synced_folder "Puppet_Modules", "/etc/puppetlabs/code/environments/production/modules", create: true
+
+  # disable the default root
+  config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -77,34 +79,80 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
   config.vm.provision "file", source: "./pe.conf", destination: "/var/tmp/pe.conf"
+  #config.vm.provision "file", source: "./puppet-enterprise.tar.gz", destination: "/var/tmp/puppet-enterprise.tar.gz"
+  config.vm.provision "file", source: "./id-puppet_control_repo.rsa", destination: "/var/tmp/id-puppet_control_repo.rsa"
+
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
-  
-	########################
+
+  	########################
     # Packages and Sources #
     ########################
-    # apt update and upgrade
+    # Packages update and upgrade
     sudo apt-get update
     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-	# puppet enterprise (For URL, see https://puppet.com/download-puppet-enterprise/thank-you)
+  	# Puppet Enterprise (For URL, see https://puppet.com/download-puppet-enterprise/thank-you)
     echo "--- Get puppet enterprise (it can take a while... ~250Mo)."
-	wget --no-verbose -cO /var/tmp/puppet-enterprise.tar.gz 'https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=ubuntu&rel=16.04&arch=amd64&ver=latest'
-	tar -xf /var/tmp/puppet-enterprise.tar.gz -C /var/tmp/ --transform "s/puppet-enterprise-[0-9\.]*-ubuntu-16.04-amd64/puppet-enterprise/"
-	sudo /var/tmp/puppet-enterprise/puppet-enterprise-installer -c /var/tmp/pe.conf
-	# modules (sudo is required to install the files into the good directory)
-	sudo puppet module install puppetlabs-apache
-	sudo puppet module install puppetlabs-vcsrepo
-	sudo puppet module install puppetlabs-postgresql
-	#sudo puppet module install puppetlabs-java
-	#sudo puppet module install puppetlabs-tomcat
+  	wget --no-verbose -cO /var/tmp/puppet-enterprise.tar.gz 'https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=ubuntu&rel=16.04&arch=amd64&ver=latest'
+  	tar -xf /var/tmp/puppet-enterprise.tar.gz -C /var/tmp/ --transform "s/puppet-enterprise-[0-9\.]*-ubuntu-16.04-amd64/puppet-enterprise/"
+  	sudo /var/tmp/puppet-enterprise/puppet-enterprise-installer -c /var/tmp/pe.conf
+  	# Move the private key
+  	sudo mkdir /etc/puppetlabs/puppetserver/ssh
+  	sudo mv /var/tmp/id-puppet_control_repo.rsa /etc/puppetlabs/puppetserver/ssh/id-puppet_control_repo.rsa
 
   SHELL
-  
+
   # The following provisions are only run when called explicitly
   if ARGV.include? '--provision-with'
 
-    # Provision "sign-node-requests"
-    config.vm.provision "sign-node-requests", type: "shell", privileged: false, inline: <<-SHELL
+    # Provision "sign-cert"
+    config.vm.provision "sign-cert", type: "shell", privileged: false, inline: <<-SHELL
       sudo puppet cert sign --all
+    SHELL
+
+    # Provision "restart-services"
+    # Restart the puppet console services
+    # https://tickets.puppetlabs.com/browse/LEARNVM-387
+    config.vm.provision "restart-services", type: "shell", privileged: true, inline: <<-SHELL
+      service pe-puppetdb stop
+      service pe-puppetserver stop
+      service pe-console-services stop
+      # puppetdb foreground
+      service pe-puppetdb start
+      service pe-puppetserver start
+      service pe-console-services start
+    SHELL
+
+    # Provision "clean-agent-cert"
+    # See https://puppet.com/docs/pe/2017.3/ssl_and_certificates/regenerate_puppet_agent_certificates.html
+    config.vm.provision "clean-agent-cert", type: "shell", privileged: true, inline: <<-SHELL
+      puppet cert clean agent1.example.com
+    SHELL
+
+    # Provision "clean-master-cert"
+    # See https://puppet.com/docs/pe/2017.3/ssl_and_certificates/regenerating_certificates_monolithic_installs.html
+    config.vm.provision "clean-master-cert", type: "shell", privileged: true, inline: <<-SHELL
+      # Back up the directory
+      DATE=$(date +"%d-%b-%Y")
+      cd /etc/puppetlabs/puppet
+      tar -zcvf ssl-$DATE.tgz ssl
+      # (Optional) Delete and recreate the Puppet CA
+        # rm -rf /etc/puppetlabs/puppet/ssl/*
+        # puppet cert list -a
+      # Regenerate the Puppet master certificates
+      rm -f /opt/puppetlabs/puppet/cache/client_data/catalog/master.example.com.json
+      puppet cert clean master.example.com
+      puppet infrastructure configure --no-recover
+    SHELL
+
+    # Provision "manage_code"
+    # See https://puppet.com/docs/pe/2017.3/code_management/code_mgr_config.html
+    config.vm.provision "manage_code", type: "shell", privileged: true, inline: <<-SHELL
+      echo "This provision is not done yet..."
+      echo "See https://puppet.com/docs/pe/2017.3/code_management/code_mgr_config.html#set-up-authentication-for-code-manager"
+      #puppet module install puppetlabs-stdlib
+      #puppet apply -e "user { 'code_manager': ensure => present, roles => 'Code Deployers', password => str2saltedsha512('code_manager') }"
+      #puppet-access login --lifetime 180d
+      #puppet-code deploy production --wait
     SHELL
 
   end
