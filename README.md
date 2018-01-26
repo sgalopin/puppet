@@ -64,7 +64,7 @@ Vous pouvez maintenant accéder à la console à l'adresse: https://master.examp
   - Dans CONFIGURE->Classification, ajouter un groupe 'OGAM',
   - Ouvrir le groupe,
   - Dans l'onglet 'Rules', ajouter le noeud 'agent1.example.com',
-  - Dans l'onglet 'Configuration', ajouter la classe 'ogam_app',
+  - Dans l'onglet 'Configuration', ajouter la classe 'ogam' (rafraîchir les définitions des classes si besoin),
   - Commiter les modifications.
 
 
